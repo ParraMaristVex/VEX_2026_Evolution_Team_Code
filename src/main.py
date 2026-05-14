@@ -12,6 +12,8 @@ from vex import *
 
 brain = Brain()
 
+motor = Motor(Ports.PORT1)
+
 def autonomous():
     brain.screen.clear_screen()
     brain.screen.print("autonomous code")
@@ -21,6 +23,9 @@ def user_control():
     brain.screen.clear_screen()
     brain.screen.print("driver control")
     # place driver control in this while loop
+
+    motor.spin(FORWARD, 120, RPM)
+
     while True:
         wait(20, MSEC)
 
