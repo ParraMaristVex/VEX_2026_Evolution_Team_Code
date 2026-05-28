@@ -11,6 +11,7 @@
 from vex import *
 
 brain = Brain()
+controller = Controller()
 
 motor = Motor(Ports.PORT1)
 
@@ -24,10 +25,14 @@ def user_control():
     brain.screen.print("driver control")
     # place driver control in this while loop
 
-    motor.spin(FORWARD, 120, RPM)
+    motor.spin(FORWARD)
 
     while True:
         wait(20, MSEC)
+        
+        forward_speed = controller.axis2.position()
+
+        motor.set_velocity(forward_speed, RPM)
 
 # create competition instance
 comp = Competition(user_control, autonomous)
