@@ -20,8 +20,11 @@ left_rear = Motor(Ports.PORT2)
 right_front = Motor(Ports.PORT9)
 right_rear = Motor(Ports.PORT10)
 
-# The lift motor is connected to port 20.
 lift_motor = Motor(Ports.PORT20)
+claw_roll_motor = Motor(Ports.PORT11)
+claw_pitch_motor = Motor(Ports.PORT12)
+
+claw_solenoid = DigitalOut(brain.three_wire_port.a)
 
 # This function is used during the autonomous period.
 # The lift and drivetrain can be programmed here later.
@@ -36,39 +39,54 @@ def user_control():
     brain.screen.clear_screen()
     brain.screen.print("driver control")
 
+    claw_roll_position = 0
+    claw_roll_speed = 180
+
+    brain.timer.reset()
+    last_update_time = brain.timer.time(SECONDS)
     while True:
-        # Update the controls every 20 milliseconds for smooth response.
-        wait(20, MSEC)
+        this_update_time = brain.timer.time(SECONDS)
+        delta_time = this_update_time - last_update_time
+        last_update_time = this_update_time
 
-        # Axis 3 is the vertical movement of the drive joystick.
-        # It controls forward and backward movement.
-        forward_speed = controller.axis3.position()
 
-        # Axis 4 is the horizontal movement of the same joystick.
-        # It controls turning left and right.
-        turn_speed = controller.axis4.position()
+        claw_pitch_speed = controller.axis2.position()
+        
+        if abs(claw_pitch_speed) <= 20:
+            claw_pitch_speed = 0
 
-        # Arcade drive mixes forward movement and turning.
-        # During a turn, the two sides receive opposite speeds.
-        left_speed = forward_speed + turn_speed
-        right_speed = forward_speed - turn_speed
+        if claw_pitch_speed == 0:
+            claw_pitch_motor.stop(HOLD)
+        else:
+            claw_pitch_motor.spin(FORWARD, claw_pitch_speed / 5, PERCENT)
 
-        # Keep the calculated motor values inside the valid -100 to 100 range.
-        left_speed = max(-100, min(100, left_speed))
-        right_speed = max(-100, min(100, right_speed))
 
-        # # Run both motors on each side at the same speed.
-        # run_side(left_front, left_rear, left_speed)
-        # run_side(right_front, right_rear, right_speed)
 
-        # Axis 2 controls the lift joystick direction.
-        # Moving it up or down changes the lift speed in small increments.
-        lift_speed = controller.axis2.position()
+        claw_roll_position += (controller.axis1.position() / 100) * delta_time * claw_roll_speed
 
-        print(lift_speed)
+        if claw_roll_position > 180:
+            claw_roll_position = 180
+        if claw_roll_position < -180:
+            claw_roll_position = -180
 
-        # The lift stops and brakes automatically when Axis 2 is released.
-        lift_motor.spin(FORWARD, lift_speed, PERCENT)
+        if controller.buttonX.pressing():
+            claw_roll_position = 0
+
+        claw_roll_motor.set_velocity(claw_roll_speed, VelocityUnits.DPS)
+        claw_roll_motor.spin_to_position(claw_roll_position, DEGREES, wait=False)
+
+
+        if controller.buttonL2.pressing():
+            claw_solenoid.set(False)
+
+        if controller.buttonR2.pressing():
+            claw_solenoid.set(True)
+
+
+        wait(100, MSEC)
+
+
+        
 
     # Create the VEX competition instance so the system can call the correct mode.
 comp = Competition(user_control, autonomous)
