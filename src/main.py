@@ -14,17 +14,56 @@ brain = Brain()
 controller = Controller()
 
 # The two motors on each side are mechanically linked by the chain.
-# Change these port numbers if the motor plugs are different on the robot.
-left_front = Motor(Ports.PORT1)
-left_rear = Motor(Ports.PORT2)
-right_front = Motor(Ports.PORT9)
-right_rear = Motor(Ports.PORT10)
+right_front = Motor(Ports.PORT1)
+left_front = Motor(Ports.PORT2)
+left_rear = Motor(Ports.PORT3)
+right_rear = Motor(Ports.PORT4)
 
 lift_motor = Motor(Ports.PORT20)
 claw_roll_motor = Motor(Ports.PORT11)
 claw_pitch_motor = Motor(Ports.PORT12)
 
 claw_solenoid = DigitalOut(brain.three_wire_port.a)
+
+
+def drive_code():
+    forward_speed = controller.axis3.position()
+    turn_speed = controller.axis4.position()
+
+    left_speed = forward_speed + turn_speed
+    right_speed = forward_speed - turn_speed
+
+    maximum_speed = max(abs(left_speed), abs(right_speed), 100)
+    left_speed = left_speed / maximum_speed * 100
+    right_speed = right_speed / maximum_speed * 100
+
+    if abs(left_speed) <= 5:
+        left_speed = 0
+    if abs(right_speed) <= 5:
+        right_speed = 0
+
+    if left_speed == 0:
+        left_front.stop(BRAKE)
+        left_rear.stop(BRAKE)
+    else:
+        left_front.spin(FORWARD, left_speed, PERCENT)
+        left_rear.spin(FORWARD, left_speed, PERCENT)
+
+    if right_speed == 0:
+        right_front.stop(BRAKE)
+        right_rear.stop(BRAKE)
+    else:
+        right_front.spin(REVERSE, right_speed, PERCENT)
+        right_rear.spin(REVERSE, right_speed, PERCENT)
+
+
+def lift_code():
+    if controller.buttonL1.pressing():
+        lift_motor.spin(FORWARD, 100, PERCENT)
+    elif controller.buttonR1.pressing():
+        lift_motor.spin(REVERSE, 100, PERCENT)
+    else:
+        lift_motor.stop(HOLD)
 
 # This function is used during the autonomous period.
 # The lift and drivetrain can be programmed here later.
@@ -49,6 +88,8 @@ def user_control():
         delta_time = this_update_time - last_update_time
         last_update_time = this_update_time
 
+        drive_code()
+        lift_code()
 
         claw_pitch_speed = controller.axis2.position()
         
