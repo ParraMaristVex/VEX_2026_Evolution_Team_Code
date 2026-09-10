@@ -33,9 +33,9 @@ def drive_code():
     left_speed = forward_speed + turn_speed
     right_speed = forward_speed - turn_speed
 
-    maximum_speed = max(abs(left_speed), abs(right_speed), 100)
-    left_speed = left_speed / maximum_speed * 100
-    right_speed = right_speed / maximum_speed * 100
+    maximum_speed = max(abs(left_speed), abs(right_speed), 25)
+    left_speed = left_speed / maximum_speed * 25
+    right_speed = right_speed / maximum_speed * 25
 
     if abs(left_speed) <= 5:
         left_speed = 0
@@ -59,9 +59,9 @@ def drive_code():
 
 def lift_code():
     if controller.buttonL1.pressing():
-        lift_motor.spin(FORWARD, 100, PERCENT)
+        lift_motor.spin(FORWARD, 25, PERCENT)
     elif controller.buttonR1.pressing():
-        lift_motor.spin(REVERSE, 100, PERCENT)
+        lift_motor.spin(REVERSE, 25, PERCENT)
     else:
         lift_motor.stop(HOLD)
 
@@ -104,7 +104,7 @@ def user_control():
 
 
         claw_roll_position += (controller.axis1.position() / 100) * delta_time * claw_roll_speed
-
+#Claw Turn Limitations
         if claw_roll_position > 180:
             claw_roll_position = 180
         if claw_roll_position < -180:
@@ -134,4 +134,3 @@ comp = Competition(user_control, autonomous)
 
     # Clear the screen when the program starts.
 brain.screen.clear_screen()
-
