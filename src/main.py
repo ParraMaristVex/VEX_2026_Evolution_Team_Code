@@ -42,6 +42,16 @@ def drive_code():
     if abs(right_speed) <= 5:
         right_speed = 0
 
+    if lift_motor.position(DEGREES) > 500:
+        crawl_multiplier = 0.10
+    elif controller.buttonB.pressing():
+        crawl_multiplier = 0.25
+    else:
+        crawl_multiplier = 1.0
+
+    left_speed *= crawl_multiplier
+    right_speed *= crawl_multiplier
+
     if left_speed == 0:
         left_front.stop(BRAKE)
         left_rear.stop(BRAKE)
@@ -154,6 +164,8 @@ def user_control():
             lift_motor.set_velocity(75, PERCENT)
             lift_motor.spin_to_position(534, DEGREES, wait=False)
             claw_pitch_motor.spin_to_position(720, DEGREES, wait=False)
+
+            
     
         
             
