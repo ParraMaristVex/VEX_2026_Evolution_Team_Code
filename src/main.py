@@ -33,9 +33,9 @@ def drive_code():
     left_speed = forward_speed + turn_speed
     right_speed = forward_speed - turn_speed
 
-    maximum_speed = max(abs(left_speed), abs(right_speed), 25)
-    left_speed = left_speed / maximum_speed * 25
-    right_speed = right_speed / maximum_speed * 25
+    maximum_speed = max(abs(left_speed), abs(right_speed), 100)
+    left_speed = left_speed / maximum_speed * 100
+    right_speed = right_speed / maximum_speed * 100
 
     if abs(left_speed) <= 5:
         left_speed = 0
@@ -57,13 +57,7 @@ def drive_code():
         right_rear.spin(REVERSE, right_speed, PERCENT)
 
 
-def lift_code():
-    if controller.buttonL1.pressing():
-        lift_motor.spin(FORWARD, 25, PERCENT)
-    elif controller.buttonR1.pressing():
-        lift_motor.spin(REVERSE, 25, PERCENT)
-    else:
-        lift_motor.stop(HOLD)
+
 
 # This function is used during the autonomous period.
 # The lift and drivetrain can be programmed here later.
@@ -73,33 +67,57 @@ def autonomous():
     # place automonous code here
 
 
+
 # This function is used while the driver controls the robot.
 def user_control():
+    
     brain.screen.clear_screen()
     brain.screen.print("driver control")
 
     claw_roll_position = 0
     claw_roll_speed = 180
 
+    pitch_joystick_active = True
+    drive_train_controls_active = True
+    
+
     brain.timer.reset()
     last_update_time = brain.timer.time(SECONDS)
     while True:
+        
         this_update_time = brain.timer.time(SECONDS)
         delta_time = this_update_time - last_update_time
         last_update_time = this_update_time
 
         drive_code()
-        lift_code()
+
+        if controller.buttonL1.pressing():
+            drive_train_controls_active = True
+            lift_motor.spin(FORWARD, 85, PERCENT)
+        elif controller.buttonR1.pressing():
+            drive_train_controls_active = True
+            lift_motor.spin(REVERSE, 85, PERCENT)
+        else:
+            if drive_train_controls_active:
+                lift_motor.stop(HOLD)
 
         claw_pitch_speed = controller.axis2.position()
-        
+        print(lift_motor.position(DEGREES))
         if abs(claw_pitch_speed) <= 20:
+            # Inside deadzone, stop motor
             claw_pitch_speed = 0
-
-        if claw_pitch_speed == 0:
-            claw_pitch_motor.stop(HOLD)
         else:
-            claw_pitch_motor.spin(FORWARD, claw_pitch_speed / 5, PERCENT)
+            # Outside deadzone. Enable joystick
+            pitch_joystick_active = True
+
+        if pitch_joystick_active:
+            # Joystick is enabled, set motor speed based on joystick position
+            if claw_pitch_speed == 0:
+                claw_pitch_motor.stop(HOLD)
+            else:
+                claw_pitch_motor.spin(FORWARD, claw_pitch_speed / 5, PERCENT)
+        #print(claw_pitch_motor.position(DEGREES))
+        
 
 
 
@@ -110,8 +128,36 @@ def user_control():
         if claw_roll_position < -180:
             claw_roll_position = -180
 
+        #Extra Buttons For the claw
+        claw_pitch_position = claw_pitch_motor.position(DEGREES)
+
         if controller.buttonX.pressing():
             claw_roll_position = 0
+        if controller.buttonLeft.pressing():
+            claw_roll_position = -90
+        if controller.buttonRight.pressing():
+            claw_roll_position = 90
+
+        if controller.buttonUp.pressing():
+            # Disable joystick until outside of deadzone
+            pitch_joystick_active = False
+            drive_train_controls_active = False
+            lift_motor.set_velocity(100, PERCENT)
+            lift_motor.spin_to_position(40, DEGREES, wait=False)
+            claw_pitch_motor.spin_to_position(360, DEGREES, wait=False)
+         
+
+        if controller.buttonDown.pressing():
+            # Disable joystick until outside of deadzone
+            pitch_joystick_active = False
+            drive_train_controls_active = False
+            lift_motor.set_velocity(75, PERCENT)
+            lift_motor.spin_to_position(534, DEGREES, wait=False)
+            claw_pitch_motor.spin_to_position(720, DEGREES, wait=False)
+    
+        
+            
+
 
         claw_roll_motor.set_velocity(claw_roll_speed, VelocityUnits.DPS)
         claw_roll_motor.spin_to_position(claw_roll_position, DEGREES, wait=False)
@@ -122,12 +168,15 @@ def user_control():
 
         if controller.buttonR2.pressing():
             claw_solenoid.set(True)
-
+            
+    
 
         wait(100, MSEC)
 
-
+    
+    
         
+    
 
     # Create the VEX competition instance so the system can call the correct mode.
 comp = Competition(user_control, autonomous)
