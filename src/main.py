@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------- #
 #                                                                              #
 # 	Module:       main.py                                                      #
-# 	Author:       AustinC                                                        #
+# 	Author:       AustinC                                                      #
 # 	Created:      14/05/2026, 15:03:53                                         #
 # 	Description:  V5 project                                                   #
 #                                                                              #
@@ -37,6 +37,7 @@ def move_forward(speed, degrees):
     left_rear.spin_for(FORWARD, degrees, DEGREES, speed, PERCENT, wait=False)
     right_front.spin_for(REVERSE, degrees, DEGREES, speed, PERCENT, wait=False)
     right_rear.spin_for(REVERSE, degrees, DEGREES, speed, PERCENT)
+
 
 def move_backward(speed, degrees):
     left_front.spin_for(REVERSE, degrees, DEGREES, speed, PERCENT, wait=False)
@@ -137,10 +138,11 @@ def move_lift_and_pitch_to_position(pitch_joystick_active, drive_train_controls_
         claw_pitch_motor.spin_to_position(720, DEGREES, wait=False)
 
     return pitch_joystick_active, drive_train_controls_active
-
+claw_roll_controls = True
 def move_claw_roll(claw_roll_position, claw_roll_speed):
     claw_roll_motor.set_velocity(claw_roll_speed, VelocityUnits.DPS)
     claw_roll_motor.spin_to_position(claw_roll_position, DEGREES, wait=False)
+    
 
 def drive_code():
     forward_speed = controller.axis3.position()
@@ -188,8 +190,11 @@ def autonomous():
     brain.screen.clear_screen()
     brain.screen.print("autonomous code")
     # place automonous code here
-    close_claw()
-    move_forward(50, 100)
+    move_forward(100, 100)
+    close_claw() 
+    open_claw()
+ 
+
 
 
 # This function is used while the driver controls the robot.
