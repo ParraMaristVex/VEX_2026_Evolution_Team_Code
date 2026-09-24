@@ -128,6 +128,14 @@ def control_claw_roll(roll_joystick_active):
         roll_joystick_active = False
         claw_roll_motor.set_velocity(50, PERCENT)
         claw_roll_motor.spin_to_position(0, DEGREES, wait=False)
+    if controller.buttonLeft.pressing():
+            roll_joystick_active = False
+            claw_roll_motor.set_velocity(50, PERCENT)
+            claw_roll_motor.spin_to_position(-90, DEGREES, wait=False)
+    if controller.buttonRight.pressing():
+            roll_joystick_active = False
+            claw_roll_motor.set_velocity(50, PERCENT)
+            claw_roll_motor.spin_to_position(90, DEGREES, wait=False)
 
     
 
