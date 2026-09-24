@@ -102,6 +102,37 @@ def control_claw_pitch(pitch_joystick_active):
 
     return pitch_joystick_active
 
+def control_claw_roll(roll_joystick_active):
+    claw_roll_speed = controller.axis1.position()
+    if abs(claw_roll_speed) <= 20:
+        # Inside deadzone, stop motor
+        claw_roll_speed = 0
+    else:
+        # Outside deadzone. Enable joystick
+        roll_joystick_active = True
+
+    if roll_joystick_active:
+        # Joystick is enabled, set motor speed based on joystick position
+        if claw_roll_speed == 0:
+            claw_roll_motor.stop(HOLD)
+        else:
+            if claw_roll_motor.position(DEGREES) < -180 and claw_roll_speed < 0:
+                claw_roll_motor.stop(HOLD)
+            elif claw_roll_motor.position(DEGREES) > 180 and claw_roll_speed > 0:
+                claw_roll_motor.stop(HOLD)
+            else:
+                claw_roll_motor.spin(FORWARD, claw_roll_speed / 5, PERCENT)
+
+    if controller.buttonX.pressing():
+        # Disable joystick until outside of deadzone
+        roll_joystick_active = False
+        claw_roll_motor.set_velocity(50, PERCENT)
+        claw_roll_motor.spin_to_position(0, DEGREES, wait=False)
+
+    
+
+    return roll_joystick_active
+
 def update_claw_roll_position(claw_roll_position, delta_time, claw_roll_speed):
     claw_roll_position += (controller.axis1.position() / 100) * delta_time * claw_roll_speed
 #Claw Turn Limitations
@@ -120,11 +151,13 @@ def update_claw_roll_position(claw_roll_position, delta_time, claw_roll_speed):
 
     return claw_roll_position
 
-def move_lift_and_pitch_to_position(pitch_joystick_active, drive_train_controls_active):
+def move_lift_and_pitch_to_position(pitch_joystick_active, drive_train_controls_active, roll_joystick_active):
+
     if controller.buttonUp.pressing():
         # Disable joystick until outside of deadzone
         pitch_joystick_active = False
         drive_train_controls_active = False
+        roll_joystick_active = False
         lift_motor.set_velocity(100, PERCENT)
         lift_motor.spin_to_position(40, DEGREES, wait=False)
         claw_pitch_motor.spin_to_position(360, DEGREES, wait=False)
@@ -133,12 +166,13 @@ def move_lift_and_pitch_to_position(pitch_joystick_active, drive_train_controls_
         # Disable joystick until outside of deadzone
         pitch_joystick_active = False
         drive_train_controls_active = False
+        roll_joystick_active = False
         lift_motor.set_velocity(75, PERCENT)
         lift_motor.spin_to_position(534, DEGREES, wait=False)
         claw_pitch_motor.spin_to_position(720, DEGREES, wait=False)
 
-    return pitch_joystick_active, drive_train_controls_active
-claw_roll_controls = True
+    return pitch_joystick_active, drive_train_controls_active, roll_joystick_active
+
 def move_claw_roll(claw_roll_position, claw_roll_speed):
     claw_roll_motor.set_velocity(claw_roll_speed, VelocityUnits.DPS)
     claw_roll_motor.spin_to_position(claw_roll_position, DEGREES, wait=False)
@@ -207,6 +241,7 @@ def user_control():
     claw_roll_speed = 180
 
     pitch_joystick_active = True
+    roll_joystick_active = True
     drive_train_controls_active = True
 
     brain.timer.reset()
@@ -219,11 +254,13 @@ def user_control():
         drive_code()
         drive_train_controls_active = control_lift(drive_train_controls_active)
         pitch_joystick_active = control_claw_pitch(pitch_joystick_active)
-        claw_roll_position = update_claw_roll_position(
-            claw_roll_position, delta_time, claw_roll_speed)
-        pitch_joystick_active, drive_train_controls_active = move_lift_and_pitch_to_position(
-            pitch_joystick_active, drive_train_controls_active)
-        move_claw_roll(claw_roll_position, claw_roll_speed)
+        roll_joystick_active = control_claw_roll(roll_joystick_active)
+
+        # claw_roll_position = update_claw_roll_position(
+        #     claw_roll_position, delta_time, claw_roll_speed)
+        pitch_joystick_active, drive_train_controls_active, roll_joystick_active = move_lift_and_pitch_to_position(
+            pitch_joystick_active, drive_train_controls_active, roll_joystick_active)
+        # move_claw_roll(claw_roll_position, claw_roll_speed)
 
         if controller.buttonL2.pressing():
             close_claw()
