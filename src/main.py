@@ -141,23 +141,6 @@ def control_claw_roll(roll_joystick_active):
 
     return roll_joystick_active
 
-def update_claw_roll_position(claw_roll_position, delta_time, claw_roll_speed):
-    claw_roll_position += (controller.axis1.position() / 100) * delta_time * claw_roll_speed
-#Claw Turn Limitations
-    if claw_roll_position > 180:
-        claw_roll_position = 180
-    if claw_roll_position < -180:
-        claw_roll_position = -180
-
-    #Extra Buttons For the claw
-    if controller.buttonX.pressing():
-        claw_roll_position = 0
-    if controller.buttonLeft.pressing():
-        claw_roll_position = -90
-    if controller.buttonRight.pressing():
-        claw_roll_position = 90
-
-    return claw_roll_position
 
 def move_lift_and_pitch_to_position(pitch_joystick_active, drive_train_controls_active):
 
@@ -261,11 +244,8 @@ def user_control():
         pitch_joystick_active = control_claw_pitch(pitch_joystick_active)
         roll_joystick_active = control_claw_roll(roll_joystick_active)
 
-        # claw_roll_position = update_claw_roll_position(
-        #     claw_roll_position, delta_time, claw_roll_speed)
         pitch_joystick_active, drive_train_controls_active = move_lift_and_pitch_to_position(
             pitch_joystick_active, drive_train_controls_active)
-        # move_claw_roll(claw_roll_position, claw_roll_speed)
 
         if controller.buttonL2.pressing():
             close_claw()
