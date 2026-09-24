@@ -151,13 +151,12 @@ def update_claw_roll_position(claw_roll_position, delta_time, claw_roll_speed):
 
     return claw_roll_position
 
-def move_lift_and_pitch_to_position(pitch_joystick_active, drive_train_controls_active, roll_joystick_active):
+def move_lift_and_pitch_to_position(pitch_joystick_active, drive_train_controls_active):
 
     if controller.buttonUp.pressing():
         # Disable joystick until outside of deadzone
         pitch_joystick_active = False
         drive_train_controls_active = False
-        roll_joystick_active = False
         lift_motor.set_velocity(100, PERCENT)
         lift_motor.spin_to_position(40, DEGREES, wait=False)
         claw_pitch_motor.spin_to_position(360, DEGREES, wait=False)
@@ -166,13 +165,11 @@ def move_lift_and_pitch_to_position(pitch_joystick_active, drive_train_controls_
         # Disable joystick until outside of deadzone
         pitch_joystick_active = False
         drive_train_controls_active = False
-        roll_joystick_active = False
         lift_motor.set_velocity(75, PERCENT)
         lift_motor.spin_to_position(534, DEGREES, wait=False)
         claw_pitch_motor.spin_to_position(720, DEGREES, wait=False)
 
-    return pitch_joystick_active, drive_train_controls_active, roll_joystick_active
-
+    return pitch_joystick_active, drive_train_controls_active
 def move_claw_roll(claw_roll_position, claw_roll_speed):
     claw_roll_motor.set_velocity(claw_roll_speed, VelocityUnits.DPS)
     claw_roll_motor.spin_to_position(claw_roll_position, DEGREES, wait=False)
@@ -258,8 +255,8 @@ def user_control():
 
         # claw_roll_position = update_claw_roll_position(
         #     claw_roll_position, delta_time, claw_roll_speed)
-        pitch_joystick_active, drive_train_controls_active, roll_joystick_active = move_lift_and_pitch_to_position(
-            pitch_joystick_active, drive_train_controls_active, roll_joystick_active)
+        pitch_joystick_active, drive_train_controls_active = move_lift_and_pitch_to_position(
+            pitch_joystick_active, drive_train_controls_active)
         # move_claw_roll(claw_roll_position, claw_roll_speed)
 
         if controller.buttonL2.pressing():
