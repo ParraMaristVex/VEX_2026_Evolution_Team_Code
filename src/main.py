@@ -212,9 +212,12 @@ def autonomous():
     brain.screen.clear_screen()
     brain.screen.print("autonomous code")
     # place automonous code here
-    move_forward(100, 100)
-    close_claw() 
     open_claw()
+    wait(1, SECONDS)
+    close_claw()
+    move_forward(20, 900)
+    
+
  
 
 
