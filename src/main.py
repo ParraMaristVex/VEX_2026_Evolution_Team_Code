@@ -24,10 +24,10 @@ claw_roll_motor = Motor(Ports.PORT11)
 claw_pitch_motor = Motor(Ports.PORT12)
 claw_solenoid = DigitalOut(brain.three_wire_port.a)
 
-def open_claw():
+def close_claw():
     claw_solenoid.set(True)
 
-def close_claw():
+def open_claw():
     claw_solenoid.set(False)
 
 
@@ -73,10 +73,10 @@ def lift_down(speed, degrees):
 def control_lift(drive_train_controls_active):
     if controller.buttonL1.pressing():
         drive_train_controls_active = True
-        lift_motor.spin(FORWARD, 85, PERCENT)
+        lift_motor.spin(FORWARD,75, PERCENT)
     elif controller.buttonR1.pressing():
         drive_train_controls_active = True
-        lift_motor.spin(REVERSE, 85, PERCENT)
+        lift_motor.spin(REVERSE, 75, PERCENT)
     else:
         if drive_train_controls_active:
             lift_motor.stop(HOLD)
@@ -212,10 +212,16 @@ def autonomous():
     brain.screen.clear_screen()
     brain.screen.print("autonomous code")
     # place automonous code here
-    open_claw()
-    wait(1, SECONDS)
     close_claw()
-    move_forward(20, 900)
+    move_forward(20, 250)
+    lift_up(50, 700)
+    claw_pitch_motor.spin_to_position(360, DEGREES, wait=True)
+    open_claw()
+    
+
+
+    #left_front.spin_for(FORWARD, 360, DEGREES, 20, PERCENT, wait=False)
+    #left_rear.spin_for(FORWARD, 360, DEGREES, 20, PERCENT, wait=True)
     
 
  
