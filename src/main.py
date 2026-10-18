@@ -6,7 +6,7 @@
 # 	Description:  V5 project                                                   #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
-
+#Aviel Code Changing On Aviel branch Test
 # Library imports
 from vex import *
 
@@ -22,8 +22,7 @@ claw_pitch_motor = Motor(Ports.PORT12)
 claw_solenoid = DigitalOut(brain.three_wire_port.a)
 
 lift_motor_left = Motor(Ports.PORT20)
-# right motor is reverse due to the motors facing opposite directions on the lift
-lift_motor_right = Motor(Ports.PORT21)
+lift_motor_right = Motor(Ports.PORT19, GearSetting.RATIO_18_1, True)
 
 def close_claw():
     claw_solenoid.set(True)
@@ -44,19 +43,19 @@ def move_backward(speed, degrees):
 
 def turn_left(speed, degrees):
     left_rear.spin_for(REVERSE, degrees, DEGREES, speed, PERCENT, wait=False)
-    right_rear.spin_for(REVERSE, degrees, DEGREES, speed, PERCENT)
+    right_rear.spin_for(FORWARD, degrees, DEGREES, speed, PERCENT)
 
 def turn_right(speed, degrees):
     left_rear.spin_for(FORWARD, degrees, DEGREES, speed, PERCENT, wait=False)
-    right_rear.spin_for(FORWARD, degrees, DEGREES, speed, PERCENT)
+    right_rear.spin_for(REVERSE, degrees, DEGREES, speed, PERCENT)
 
 def lift_up(speed, degrees):
     lift_motor_left.spin_for(FORWARD, degrees, DEGREES, speed, PERCENT, wait=False)
-    lift_motor_right.spin_for(REVERSE, degrees, DEGREES, speed, PERCENT)
+    lift_motor_right.spin_for(FORWARD, degrees, DEGREES, speed, PERCENT)
 
 def lift_down(speed, degrees):
     lift_motor_left.spin_for(REVERSE, degrees, DEGREES, speed, PERCENT)
-    lift_motor_right.spin_for(FORWARD, degrees, DEGREES, speed, PERCENT)
+    lift_motor_right.spin_for(REVERSE, degrees, DEGREES, speed, PERCENT)
 
 
 
@@ -64,23 +63,7 @@ def lift_down(speed, degrees):
 
 
 
-def control_lift(drive_train_controls_active):
-    if controller.buttonL1.pressing():
-        drive_train_controls_active = True
-        lift_motor_left.spin(FORWARD,80, PERCENT, wait =False)
-        lift_motor_right.spin(REVERSE,80, PERCENT)
-    elif controller.buttonR1.pressing():
-        drive_train_controls_active = True
-        lift_motor_left.spin(REVERSE, 80, PERCENT, wait=False)
-        lift_motor_right.spin(FORWARD, 80, PERCENT)
-    else:
-        if drive_train_controls_active:
-            lift_motor_left.stop(HOLD)
-            lift_motor_right.stop(HOLD)
-
-    return drive_train_controls_active
-
-def control_claw_pitch(pitch_joystick_active):
+def control_claw_pitch(pitch_joystick_active, speed_limit):
     claw_pitch_speed = controller.axis2.position()
     print(lift_motor_left.position(DEGREES))
     if abs(claw_pitch_speed) <= 20:
@@ -95,10 +78,12 @@ def control_claw_pitch(pitch_joystick_active):
         if claw_pitch_speed == 0:
             claw_pitch_motor.stop(HOLD)
         elif controller.buttonY.pressed:
-            claw_pitch_motor.spin(FORWARD, claw_pitch_speed * 1, PERCENT)
+            claw_pitch_motor.spin(
+                FORWARD, claw_pitch_speed * speed_limit / 100, PERCENT)
 
         else:
-            claw_pitch_motor.spin(FORWARD, claw_pitch_speed * 0.35, PERCENT)
+            claw_pitch_motor.spin(
+                FORWARD, claw_pitch_speed * 0.35 * speed_limit / 100, PERCENT)
 
     return pitch_joystick_active
 
@@ -123,7 +108,7 @@ def control_claw_roll(roll_joystick_active):
             else:
                 claw_roll_motor.spin(FORWARD, claw_roll_speed / 5, PERCENT)
 
-    if controller.buttonX.pressing():
+    if controller.buttonA.pressing():
         # Disable joystick until outside of deadzone
         roll_joystick_active = False
         claw_roll_motor.set_velocity(50, PERCENT)
@@ -142,13 +127,13 @@ def control_claw_roll(roll_joystick_active):
     return roll_joystick_active
 
 
-#def move_lift_and_pitch_to_position(pitch_joystick_active, drive_train_controls_active):
+def move_lift_and_pitch_to_position(pitch_joystick_active):
 
     if controller.buttonUp.pressing():
         # Disable joystick until outside of deadzone
         pitch_joystick_active = False
-        drive_train_controls_active = False
         lift_motor_left.set_velocity(100, PERCENT)
+        lift_motor_right.set_velocity(100, PERCENT)
         lift_motor_left.spin_to_position(40, DEGREES, wait=False)
         lift_motor_right.spin_to_position(40, DEGREES, wait=False)
         claw_pitch_motor.spin_to_position(360, DEGREES, wait=False)
@@ -156,23 +141,23 @@ def control_claw_roll(roll_joystick_active):
     if controller.buttonDown.pressing():
         # Disable joystick until outside of deadzone
         pitch_joystick_active = False
-        drive_train_controls_active = False
-        lift_motor_left.set_velocity(75, PERCENT)
+        lift_motor_left.set_velocity(100, PERCENT)
+        lift_motor_right.set_velocity(100, PERCENT)
         lift_motor_left.spin_to_position(534, DEGREES, wait=False)
         lift_motor_right.spin_to_position(534, DEGREES, wait=False)
         claw_pitch_motor.spin_to_position(720, DEGREES, wait=False)
 
-    return pitch_joystick_active, drive_train_controls_active
+    return pitch_joystick_active
 def move_claw_roll(claw_roll_position, claw_roll_speed):
     claw_roll_motor.set_velocity(claw_roll_speed, VelocityUnits.DPS)
     claw_roll_motor.spin_to_position(claw_roll_position, DEGREES, wait=False)
     
 
-def drive_code():
+def drive_code(drive_speed_limit):
     forward_speed = controller.axis3.position()
     turn_speed = controller.axis4.position()
 
-    print(controller.axis3.position())
+    #print(controller.axis3.position())
 
     left_speed = forward_speed + turn_speed
     right_speed = forward_speed - turn_speed
@@ -186,42 +171,39 @@ def drive_code():
     if abs(right_speed) <= 5:
         right_speed = 0
 
-    if lift_motor_left.position(DEGREES) > 500:
-        crawl_multiplier = 0.20
-    elif controller.buttonB.pressing():
-        crawl_multiplier = 0.30
-    else:
-        crawl_multiplier = 1.0
-
-    left_speed *= crawl_multiplier
-    right_speed *= crawl_multiplier
+    left_speed *= drive_speed_limit / 100
+    right_speed *= drive_speed_limit / 100
 
     if left_speed == 0:
         left_rear.stop(BRAKE)
-    else:
+    elif left_speed > 0:
         left_rear.spin(FORWARD, left_speed, PERCENT)
+    else:
+        left_rear.spin(REVERSE, -left_speed, PERCENT)
 
     if right_speed == 0:
         right_rear.stop(BRAKE)
+    elif right_speed > 0:
+        right_rear.spin(REVERSE, right_speed, PERCENT)
     else:
-        right_rear.spin(FORWARD, right_speed, PERCENT)
+        right_rear.spin(FORWARD, -right_speed, PERCENT)
 
 # This function is used durng the autonomous period.
 # The lift and drivetrain can be programmed here later.
 def autonomous():
     brain.screen.clear_screen()
-    brain.screen.print("autonomous code")
+    brain.screen.print("autonomous code Team 11518B")
     # place automonous code here
     close_claw()
     move_forward(20, 250)
-    lift_up(50, 700)
+    lift_up(100, 700)
     claw_pitch_motor.spin_to_position(360, DEGREES, wait=True)
     open_claw()
     
 # This function is used while the driver controls the robot.
 def user_control():
-    brain.screen.clear_screen()
-    brain.screen.print("driver control")
+    brain .screen.clear_screen()
+    brain.screen.print("driver control Team 11518B")
     close_claw()
 
     claw_roll_position = 0
@@ -229,8 +211,9 @@ def user_control():
 
     pitch_joystick_active = True
     roll_joystick_active = True
-    drive_train_controls_active = True
-
+    drive_speed_levels = (15, 50, 100)
+    drive_speed_index = 2
+    x_was_pressed = False
     brain.timer.reset()
     last_update_time = brain.timer.time(SECONDS)
     while True:
@@ -238,18 +221,40 @@ def user_control():
         delta_time = this_update_time - last_update_time
         last_update_time = this_update_time
 
-        drive_code()
-        drive_train_controls_active = control_lift(drive_train_controls_active)
-        pitch_joystick_active = control_claw_pitch(pitch_joystick_active)
+        x_is_pressed = controller.buttonX.pressing()
+        if x_is_pressed and not x_was_pressed:
+            drive_speed_index = (drive_speed_index + 1) % len(drive_speed_levels)
+        x_was_pressed = x_is_pressed
+
+        speed_limit = drive_speed_levels[drive_speed_index]
+        drive_code(speed_limit)
+        if controller.buttonR2.pressing():
+            lift_motor_left.spin(FORWARD, 100, PERCENT)
+            lift_motor_right.spin(FORWARD, 100, PERCENT)
+        elif controller.buttonL2.pressing():
+            lift_motor_left.spin(REVERSE, 100, PERCENT)
+            lift_motor_right.spin(REVERSE, 100, PERCENT)
+        else:
+            lift_motor_left.stop(HOLD)
+            lift_motor_right.stop(HOLD)
+
+        #if lift_motor_left.position(DEGREES) > 3100:
+            #lift_motor_left.set_position(3090, DEGREES)
+            #lift_motor_right.set_position(3090, DEGREES)
+        #else:
+            #lift_motor_left.set_position(lift_motor_left.position(DEGREES), DEGREES)
+            #lift_motor_right.set_position(lift_motor_right.position(DEGREES), DEGREES)
+
+        pitch_joystick_active = control_claw_pitch(
+            pitch_joystick_active, speed_limit)
         roll_joystick_active = control_claw_roll(roll_joystick_active)
 
-        pitch_joystick_active, drive_train_controls_active = move_lift_and_pitch_to_position(
-            pitch_joystick_active, drive_train_controls_active)
+        pitch_joystick_active = move_lift_and_pitch_to_position(pitch_joystick_active)
 
-        if controller.buttonL2.pressing():
+        if controller.buttonL1.pressing():
             close_claw()
 
-        if controller.buttonR2.pressing():
+        if controller.buttonR1.pressing():
             open_claw()
 
         wait(100, MSEC)
