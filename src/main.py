@@ -23,6 +23,7 @@ claw_solenoid = DigitalOut(brain.three_wire_port.a)
 
 lift_motor_left = Motor(Ports.PORT20)
 lift_motor_right = Motor(Ports.PORT19, GearSetting.RATIO_18_1, True)
+toggle_motor = Motor(Ports.PORT18)
 
 def close_claw():
     claw_solenoid.set(True)
@@ -129,23 +130,12 @@ def control_claw_roll(roll_joystick_active):
 
 def move_lift_and_pitch_to_position(pitch_joystick_active):
 
-    if controller.buttonUp.pressing():
+   #if controller.buttonUp.pressing():
         # Disable joystick until outside of deadzone
-        pitch_joystick_active = False
-        lift_motor_left.set_velocity(100, PERCENT)
-        lift_motor_right.set_velocity(100, PERCENT)
-        lift_motor_left.spin_to_position(40, DEGREES, wait=False)
-        lift_motor_right.spin_to_position(40, DEGREES, wait=False)
-        claw_pitch_motor.spin_to_position(360, DEGREES, wait=False)
-
-    if controller.buttonDown.pressing():
+    
+    #if controller.buttonDown.pressing():
         # Disable joystick until outside of deadzone
-        pitch_joystick_active = False
-        lift_motor_left.set_velocity(100, PERCENT)
-        lift_motor_right.set_velocity(100, PERCENT)
-        lift_motor_left.spin_to_position(534, DEGREES, wait=False)
-        lift_motor_right.spin_to_position(534, DEGREES, wait=False)
-        claw_pitch_motor.spin_to_position(720, DEGREES, wait=False)
+      
 
     return pitch_joystick_active
 def move_claw_roll(claw_roll_position, claw_roll_speed):
@@ -196,8 +186,7 @@ def autonomous():
     # place automonous code here
     close_claw()
     move_forward(20, 250)
-    lift_up(100, 700)
-    claw_pitch_motor.spin_to_position(360, DEGREES, wait=True)
+    lift_up(100, 500)
     open_claw()
     
 # This function is used while the driver controls the robot.
@@ -256,6 +245,9 @@ def user_control():
 
         if controller.buttonR1.pressing():
             open_claw()
+
+        if controller.buttonA.pressing():
+            toggle_motor.spin(FORWARD, 75)
 
         wait(100, MSEC)
 
