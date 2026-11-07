@@ -78,9 +78,9 @@ def control_claw_pitch(pitch_joystick_active, speed_limit):
         # Joystick is enabled, set motor speed based on joystick position
         if claw_pitch_speed == 0:
             claw_pitch_motor.stop(HOLD)
-        elif controller.buttonY.pressed:
-            claw_pitch_motor.spin(
-                FORWARD, claw_pitch_speed * speed_limit / 100, PERCENT)
+        #elif controller.buttonY.pressed:
+        #    claw_pitch_motor.spin(
+        #        FORWARD, claw_pitch_speed * speed_limit / 100, PERCENT)
 
         else:
             claw_pitch_motor.spin(
@@ -247,9 +247,15 @@ def user_control():
             open_claw()
 
         if controller.buttonA.pressing():
-            toggle_motor.spin(FORWARD, 75)
+            toggle_motor.spin(FORWARD, 150)
 
-        wait(100, MSEC)
+        elif controller.buttonY.pressing():
+            toggle_motor.spin(REVERSE, 150)
+
+        else:
+            toggle_motor.stop(HOLD)
+
+
 
 # Create the VEX competition instance so the system can call the correct mode.
 comp = Competition(user_control, autonomous)
